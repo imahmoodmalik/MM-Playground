@@ -1,127 +1,943 @@
-# Touchline Product Requirements
+Touchline
 
-> A coach’s workspace for choosing a starting eleven and explaining the reasoning behind it.
+An open football tactics and starting XI studio.
 
-**Status:** Discussion draft for product and coaching review  
-**Scope:** Next product release after the private prototype  
-**Date:** 25 September 2026
+Touchline is a football planning application for building formations, selecting players, experimenting with tactical systems, and explaining why an XI makes sense.
 
-## Product decision
+The goal is not to find a mathematically “best” eleven.
 
-Touchline should help a coach build a defensible match plan from the squad they actually have: available players, roles, opponent, style of play and the risks of each choice. It should expose the logic behind a formation and starting eleven so a coach can change the decision when new information arrives. The coach remains accountable for the selection.
+The goal is to give someone a canvas for answering a much more interesting question:
 
-**Recommendation.** Build a focused planning workflow for academy and amateur coaches first. Their data can be entered manually and their decisions are frequent enough to test the product without a costly performance data integration. Treat tactical suggestions as transparent prompts, not automated predictions.
+Given these players, this opponent, and the way I want my team to play — what should my team look like, and why?
 
-## Who it serves
+Touchline should work first as a public football sandbox anyone can use. Over time, it can become a deeper workspace for coaches, analysts and clubs using their own squads and, where licensing permits, real current and historical football data.
 
-Primary user: a head coach or assistant preparing one team for its next match with a roster of roughly 18–30 players. They know football and need a faster, clearer way to test and communicate choices. Secondary users in a later phase: analysts and assistants contributing evidence or reviewing the plan. Spectators, fantasy players and live match management are outside the first release.
+Current status: Experimental / active development
+Specification: v2.0
+Updated: 25 September 2026
 
-## The decision the coach is making
+⸻
 
-The job is not to maximize eleven individual ratings. It is to assemble a team that can execute a particular plan against a particular opponent, while accounting for availability, positional coverage and relationships between players. The output is a coherent starting XI, a shape in and out of possession, named responsibilities and a short account of the alternatives rejected.
+1. Product principles
 
-## Planning workflow
+Touchline should be built around six principles.
 
-| Stage | Coach provides | Touchline returns |
-|---|---|---|
-| 1 — Set the match | Opponent, fixture, objective and what is known or uncertain | A dated plan; unknown opponent information stays explicitly unknown. |
-| 2 — Confirm availability | Available, doubtful or unavailable; minutes limits and selection notes | Eligible pool and warnings when a role has too few credible options. |
-| 3 — Choose how to play | Press, build-up, transition, width, defensive approach and priorities | Two or three plausible shapes and the reasons each may help. |
-| 4 — Choose the shape | A starting formation and possible phase changes | Pitch view for both phases, responsibilities and gaps in coverage. |
-| 5 — Select the XI | Players for each role, partnerships, captain and set-piece assignments if relevant | A valid eleven, bench, positional fit and visible trade-offs. |
-| 6 — Compare and commit | An alternative shape or player; coach’s final judgment | What changes, what risk remains and a saved rationale for the selected plan. |
-| 7 — Revisit | Injury, late opponent information, or post-match observations | A revised plan with the changed assumption and previous decision retained. |
+1.1 The formation belongs to the user
 
-## Core product requirements
+Football cannot be reduced to a predefined list of formations.
 
-- **FR1 — Match plans.** Create, reopen, duplicate and revise a plan for one fixture. Store opponent, kickoff, selected XI, shape, rationale and version history.
-- **FR2 — Roster.** Maintain name, shirt number, preferred foot, primary and secondary positions, availability, recent workload note and configurable attributes.
-- **FR3 — Formation board.** Offer all football formations with role labels and separate example shapes in and out of possession. Role instructions can change without changing the formation label.
-- **FR4 — Explainable suggestions.** Every suggestion identifies inputs and assumptions. The coach can accept, modify or reject it and record why.
-- **FR5 — Comparisons.** Comparing candidate players or shapes shows role coverage, declared evidence and resulting team responsibilities rather than one unexplained score.
-- **FR6 — Coach override.** The coach can finish with an unconventional XI after acknowledging material warnings. The product never silently repairs an override.
+Presets such as:
 
-## Player information and validation
+* 4–3–3
+* 4–2–3–1
+* 4–4–2
+* 3–5–2
+* 3–4–3
+* 5–3–2
+* 4–1–4–1
+* 3–2–4–1
 
-Attributes are coach assessments. A rating such as “passing 84” has no meaning without a scale, date, source and context. A rating can be left unassessed instead of forcing a guess.
+are useful starting points, but they are templates rather than constraints.
 
-- **Identity and roles:** stable player ID; display name and shirt number; at least one declared position with one marked primary; multiple secondary roles allowed.
-- **Availability:** available, doubtful or unavailable; optional reason and minutes cap. Unavailable players cannot silently enter the XI.
-- **Attributes:** shared core by position plus custom attributes. Assessed values are whole numbers 0–100 with plain-language anchors; unassessed is distinct from zero.
-- **Evidence and freshness:** optional observation/match note, assessor, observation date and confidence. Surface stale or low-confidence data.
-- **Data validation:** block duplicate shirt numbers, duplicate attribute names, unsupported roles, impossible numeric entries, missing required fields and duplicate XI assignments.
-- **Football warnings:** warn rather than block on limited role cover, doubtful starter, high workload, missing evidence, unbalanced attack/defence or insufficient players for a shape.
+Users should ultimately be able to place eleven players freely, define their own roles and describe how those positions change through different phases of play.
 
-## How the board should choose players
+A nominal 4–3–3 might therefore become:
 
-A role match is a starting constraint, not proof that a player should start. The selector first checks availability and minimum position cover for the shape. It preserves explicit coach choices where possible and presents alternatives based on chosen role responsibilities.
+3–2–5 in possession
 
-When the squad cannot fill all eleven roles, the board leaves those positions open and explains the gap. It must not silently assign a player to an unlisted role.
+and:
 
-**Example:** if a coach chooses a back three but has only two eligible centre-backs, Touchline shows the third position as open. It may offer a player whose secondary role is centre-back or suggest a back four, while stating which assumption changed. The coach may override, but the plan records the override and rationale.
+4–5–1 out of possession
 
-## Recommendations with limits
+without Touchline treating these as contradictory formations.
 
-Use transparent rules in the first release. Suggestions may explain tactical logic and point to selected players, but cannot infer that the team will win or promise a numeric success probability. An unknown opponent profile produces a neutral starting point and a question for the coach, not invented scouting.
+⸻
 
-## Detailed interaction requirements
+1.2 Players are more than ratings
 
-### Formation and team view
-- Show base shape plus plausible in-possession and out-of-possession examples; make clear these are not fixed dots.
-- When formation changes, preserve players in compatible roles where possible and explain vacancies/displaced starters.
-- Bench contains only available squad members; doubtful players are visibly marked.
+Touchline should never reduce a player to one universal number.
 
-### Player editing
-- Add/edit players from squad view and selected role. Validate while saving and offer a deliberate Validate action.
-- If a starting player's only compatible position is removed, flag it, suggest alternatives and require resolution or explicit override before finalizing.
-- Never convert blank attributes to zero. Avoid silently merging similarly named attributes.
+Player information may eventually include:
 
-### Explanation and comparison
-- Summarize why the formation fits the objective, why selected players fit duties, weak coverage and what assumption would change the choice.
-- Player comparisons compare like attributes and show missing data. Shape comparisons identify roles added/removed, width/central-cover changes and bench impact.
-- Save free-text override reasons and final decisions with their inputs so later edits do not rewrite historical explanations.
+Identity
 
-## Acceptance scenarios
+* Name
+* Date of birth
+* Nationality
+* Team
+* Shirt number
+* Preferred foot
 
-| Scenario | Expected result |
-|---|---|
-| Duplicate shirt number | Save blocked; conflicting number identified; draft intact. |
-| Rating blank, 0, 100, 101 or 74.5 | Blank = unassessed; 0/100 save; 101/74.5 rejected. |
-| Change 4–3–3 to 3–4–3 | Compatible choices remain; unfilled roles visible; alternative comparable before commitment. |
-| Late injury makes starter unavailable | Plan flagged; compatible replacements shown; previous version retained. |
-| Another editor saves first | Later save does not overwrite newer plan; coach can compare and resolve conflict. |
+Roles
 
-## Release sequence
+* Primary position
+* Secondary positions
+* Custom roles
 
-**Current prototype:** formation exploration, account-saved squad editing, structural validation and basic suggestions.
+Observed performance
 
-**First product release:** fixture plans, availability, primary roles, meaningful warnings, evidence attached to assessments, comparisons, saved rationale and plan revisions.
+* Minutes
+* Passing
+* Carries
+* Pressures
+* Duels
+* Shots
+* Other licensed event or tracking data
 
-**Later experiments:** assistant collaboration, opponent clips/data imports, set-piece responsibilities, post-match reflection and learning from overrides.
+Coach assessments
 
-## What success means
+* Technical
+* Tactical
+* Physical
+* Mental
+* Custom attributes
 
-- **Activation:** coach enters at least 15 usable players and completes one match plan without facilitator help.
-- **Repeat use:** same coach prepares at least three separate fixtures within six weeks.
-- **Decision clarity:** coaches explain chosen XI and one alternative using the saved plan; reviewers identify assumptions without a live walkthrough.
-- **Trust and friction:** track warnings acknowledged, recommendations overridden with reasons, erroneous role suggestions, stale assessments and time to complete.
-- **Data quality:** track missing availability, unassessed core attributes and plans with open roles at commitment.
+Context
 
-## Risks and design responses
+* Season
+* Competition
+* Team
+* Assessment date
+* Source
+* Confidence
+* Sample size
 
-- **False precision:** show source, date and confidence; allow unassessed values; avoid universal player scores.
-- **Formation determinism:** label phase shapes as examples and explain movement/cover through role instructions.
-- **Recommendation bias:** present assumptions and plausible alternatives; invite overrides and review errors with coaches.
-- **Incomplete squads:** keep manual entry fast, leave gaps visible and allow draft plans.
+Missing information must remain missing.
 
-## Questions for product review
+Unknown ≠ 0
 
-- Is the first user an academy head coach, amateur coach, or assistant analyst?
-- What evidence can coaches enter in under ten minutes?
-- When should an out-of-position choice warn versus block?
-- Should staff sharing be in the first release, or is export sufficient?
-- Which two or three real coaching decisions should we observe end-to-end before setting success targets?
+⸻
 
----
+1.3 The system explains; the user decides
 
-**DISCUSSION DRAFT · 25 SEPTEMBER 2026**
+Touchline can:
+
+* identify positional gaps;
+* compare alternatives;
+* identify role mismatches;
+* surface constraints;
+* suggest formations;
+* identify trade-offs;
+* generate tactical questions;
+* explain why an alternative might work.
+
+Touchline should not pretend that football can be solved deterministically.
+
+Recommendations must expose:
+
+Inputs → assumptions → reasoning → recommendation → uncertainty
+
+The final decision belongs to the user.
+
+⸻
+
+1.4 Football is dynamic
+
+The pitch is not eleven dots.
+
+Touchline should eventually represent at least:
+
+1. Base shape
+2. In possession
+3. Out of possession
+4. Transition
+
+A player’s identity remains constant while their position and responsibility may change between phases.
+
+⸻
+
+1.5 Historical context matters
+
+If real football data is introduced, Touchline must understand time.
+
+A user should eventually be able to ask:
+
+What would this team have looked like in the 2020/21 season?
+
+without today’s transfers, roles or statistics contaminating that historical view.
+
+Player data therefore needs to be associated with:
+
+Player + team + competition + season + date + source
+
+rather than simply:
+
+Player
+
+⸻
+
+1.6 Real football data is optional infrastructure
+
+Touchline must remain useful without commercial football data.
+
+The core application should work with:
+
+* fictional players;
+* manually entered players;
+* imported private squads.
+
+Real player data can later be added through licensed providers.
+
+Potential providers include Opta/Stats Perform, Hudl StatsBomb/Wyscout and Sportradar.
+
+Provider integrations should use an adapter architecture so the product is not structurally dependent on one vendor.
+
+⸻
+
+2. Who Touchline is for
+
+Public explorer
+
+Someone interested in football tactics who wants to:
+
+* build an XI;
+* experiment with formations;
+* create custom systems;
+* compare players;
+* understand tactical trade-offs;
+* share a tactical board.
+
+No coaching organization should be required.
+
+⸻
+
+Coach
+
+Someone preparing a real team who wants to:
+
+* maintain their squad;
+* track availability;
+* define roles;
+* assess players;
+* prepare for an opponent;
+* create a match plan;
+* compare alternatives;
+* communicate responsibilities.
+
+⸻
+
+Analyst / staff
+
+A future collaborative user who may:
+
+* contribute observations;
+* import data;
+* compare players;
+* review tactical alternatives;
+* collaborate on match plans.
+
+This is not required for the initial release.
+
+⸻
+
+3. Core experience
+
+A complete Touchline workflow should eventually look like:
+
+MATCH / EXPERIMENT
+        ↓
+CONTEXT
+        ↓
+SQUAD
+        ↓
+PLAYING IDEA
+        ↓
+FORMATION
+        ↓
+ROLES
+        ↓
+STARTING XI
+        ↓
+ALTERNATIVES
+        ↓
+WARNINGS / TRADE-OFFS
+        ↓
+RATIONALE
+        ↓
+SAVE / SHARE
+
+The user should be able to move backwards at any point.
+
+Changing an assumption should update the consequences without silently destroying previous decisions.
+
+⸻
+
+4. Formation Studio
+
+The Formation Studio is the core Touchline interface.
+
+4.1 Free canvas
+
+Users should eventually be able to:
+
+* create eleven positional slots;
+* drag them anywhere on the pitch;
+* position using touch;
+* position using keyboard;
+* rename roles;
+* define width and depth;
+* save a system;
+* duplicate a system.
+
+Exactly one position must be designated goalkeeper for a committed 11v11 system.
+
+⸻
+
+4.2 Formation templates
+
+Templates provide fast starting points.
+
+Initial template families should include common systems such as:
+
+* 4–4–2
+* 4–3–3
+* 4–2–3–1
+* 3–5–2
+* 3–4–3
+* 5–3–2
+* 4–1–4–1
+* 3–2–4–1
+
+Templates must be data/content rather than application logic.
+
+Adding a formation should therefore not require changing the core application.
+
+⸻
+
+5. Tactical phases
+
+A formation can contain multiple snapshots.
+
+BASE
+      ST
+LW            RW
+    CM    CM
+       DM
+LB   CB   CB   RB
+       GK
+
+might become:
+
+IN POSSESSION
+LW   ST   10   RW
+   8         8
+LB     DM     RB
+    CB    CB
+       GK
+
+The same players remain assigned.
+
+Only their tactical positions and responsibilities change.
+
+⸻
+
+6. Roles and instructions
+
+Positions and roles are different concepts.
+
+A player positioned at right-back might have the role:
+
+Inverted Fullback
+
+with instructions such as:
+
+* invert during build-up;
+* join midfield;
+* protect central transition;
+* press opposition winger;
+* recover into back four.
+
+Touchline should support predefined instructions and free-text instructions.
+
+Potential instructions include:
+
+* invert;
+* overlap;
+* underlap;
+* hold width;
+* occupy half-space;
+* drop between centre-backs;
+* stay high;
+* attack box;
+* cover centre;
+* trigger press.
+
+⸻
+
+7. Squad and player model
+
+A player should have a stable internal identity.
+
+Example:
+
+Player
+├── Identity
+├── Team memberships
+├── Positions
+├── Attributes
+├── Assessments
+├── Observed statistics
+├── Availability
+└── Evidence
+
+Shirt number, club and position are properties of the player in context — not permanent identifiers.
+
+⸻
+
+8. Player creation and editing
+
+Users should be able to:
+
+* create a player;
+* edit a player;
+* duplicate a private player;
+* import players;
+* assign primary position;
+* assign multiple secondary positions;
+* define preferred foot;
+* define attributes;
+* mark attributes unknown;
+* attach assessment context.
+
+A player may have custom attributes.
+
+Example:
+
+Passing          84
+Press resistance 76
+Acceleration     81
+Defensive IQ     73
+Leadership       Unknown
+
+Unknown must never silently become 0.
+
+⸻
+
+9. Validation model
+
+Touchline should distinguish:
+
+Error
+
+The state is structurally invalid.
+
+Examples:
+
+* same player assigned twice;
+* eleven-player plan contains ten players;
+* no goalkeeper;
+* invalid attribute value;
+* duplicate player identity;
+* malformed import.
+
+Errors may prevent final commitment.
+
+Warning
+
+The decision may be unusual or risky but remains valid.
+
+Examples:
+
+* player outside preferred position;
+* doubtful player starting;
+* high workload;
+* weak defensive coverage;
+* limited evidence;
+* insufficient role familiarity;
+* asymmetrical shape.
+
+Warnings should not automatically change the user’s decision.
+
+The user can acknowledge or override them.
+
+⸻
+
+10. Selection engine
+
+Touchline should eventually help assemble an XI.
+
+The engine should evaluate:
+
+1. Availability
+2. Eligibility
+3. Formation requirements
+4. Role compatibility
+5. Coach priorities
+6. Available evidence
+7. Existing locked selections
+
+It should then produce alternatives rather than one supposedly correct answer.
+
+For example:
+
+Option A — strongest role fit
+
+Prioritizes player-role compatibility.
+
+Option B — lower-risk structure
+
+Prioritizes positional coverage and balance.
+
+Option C — tactical alternative
+
+Changes one or more assumptions to create a meaningfully different approach.
+
+Every recommendation should explain itself.
+
+⸻
+
+11. Explainability
+
+A recommendation should resemble:
+
+This 3–2–4–1 provides an additional central build-up player against the opponent’s two-player press.
+
+Player A remains at centre-back because of his declared ball-playing role and available passing evidence.
+
+Player B moves into midfield during possession.
+
+The main trade-off is reduced natural width on the right.
+
+If width becomes a higher priority, consider Player C or restore the right wing-back role.
+
+Not:
+
+Formation suitability: 92%
+
+unless a clearly defined calculation justifies exactly what that number means.
+
+⸻
+
+12. Comparison
+
+Users should be able to compare:
+
+Player vs player
+
+Show:
+
+* relevant shared attributes;
+* missing data;
+* role suitability evidence;
+* season/context;
+* availability;
+* source.
+
+Formation vs formation
+
+Show:
+
+* roles added;
+* roles removed;
+* player displacement;
+* width;
+* central coverage;
+* defensive structure;
+* bench impact.
+
+The comparison should explain differences rather than merely produce a winner.
+
+⸻
+
+13. Historical mode
+
+Future versions may support:
+
+Player
+   ↓
+Season
+   ↓
+Competition
+   ↓
+Team
+   ↓
+Snapshot date
+
+Example:
+
+Mohamed Salah — Liverpool — Premier League — 2018/19
+
+should be treated as a contextual player record rather than automatically using current information.
+
+Historical plans should remain reproducible.
+
+⸻
+
+14. Real football data
+
+Commercial football data is a future enhancement, not a prerequisite.
+
+Potential providers:
+
+* Opta / Stats Perform
+* Hudl StatsBomb
+* Wyscout
+* Sportradar
+* specialist tracking providers
+
+Touchline should implement provider adapters:
+
+                 TOUCHLINE
+                     │
+              Canonical model
+                     │
+          ┌──────────┼──────────┐
+          │          │          │
+        Opta     StatsBomb   Sportradar
+
+The application should know exactly:
+
+* provider;
+* competition;
+* season;
+* metric definition;
+* coverage;
+* source timestamp;
+* ingestion timestamp.
+
+Provider data must only be exposed where the relevant license permits the intended use.
+
+When coverage is unavailable:
+
+show missing data.
+
+Do not fabricate it or silently substitute another source.
+
+⸻
+
+15. Sharing
+
+Users should eventually be able to generate a shareable tactical board.
+
+Public boards should contain only information permitted for public display.
+
+Private information such as:
+
+* injury notes;
+* workload;
+* private assessments;
+* staff comments;
+* restricted provider fields
+
+must not automatically appear in public views.
+
+⸻
+
+16. Accessibility
+
+The pitch cannot depend entirely on drag-and-drop.
+
+Every important action should eventually have:
+
+* mouse;
+* touch;
+* keyboard;
+* list-based alternative.
+
+Touchline should target WCAG 2.2 AA for critical workflows.
+
+⸻
+
+17. Functional acceptance scenarios
+
+FR01 — Custom formation
+
+A user creates an asymmetric eleven-player system without selecting a preset, names its roles and saves it as a reusable template.
+
+FR02 — Tactical phases
+
+A user moves roles across base, possession, defensive and transition phases while player identity remains attached.
+
+FR03 — Invalid XI
+
+A lineup containing:
+
+* duplicate player;
+* ten starters;
+* no goalkeeper
+
+cannot be committed.
+
+The draft remains intact.
+
+FR04 — Custom attributes
+
+A coach creates a custom attribute with a defined range and description.
+
+The same validation applies during manual editing and import.
+
+FR05 — Attribute boundaries
+
+For an integer 0–100 attribute:
+
+Blank → Unknown ✓
+0     → Valid ✓
+100   → Valid ✓
+101   → Invalid ✗
+74.5  → Invalid ✗
+
+FR06 — Historical player
+
+Two seasons belonging to the same player remain distinct.
+
+Historical plans remain reproducible.
+
+FR07 — Missing provider coverage
+
+Unsupported competition/season data is shown as unavailable.
+
+Nothing is fabricated.
+
+Manual player creation remains available.
+
+FR08 — Availability
+
+A doubtful starter or minutes restriction generates a warning.
+
+The user can select an alternative or explicitly override it.
+
+FR09 — Public sharing
+
+Private information and provider fields without sharing rights are excluded from public boards.
+
+FR10 — Concurrent editing
+
+Two editors cannot silently overwrite one another’s fixture changes.
+
+⸻
+
+18. Non-functional requirements
+
+Touchline should eventually support:
+
+Performance
+
+* responsive pitch interactions;
+* reasonable search latency;
+* fast plan loading.
+
+Accessibility
+
+* WCAG 2.2 AA target;
+* keyboard navigation;
+* screen reader support;
+* reduced motion;
+* appropriate touch targets.
+
+Internationalization
+
+* football/soccer terminology;
+* localized dates;
+* metric units;
+* names with diacritics;
+* RTL readiness.
+
+Reliability
+
+* autosave;
+* draft recovery;
+* failed-request recovery;
+* version history.
+
+Security
+
+* scoped authorization;
+* encrypted transport/storage;
+* audit logging;
+* export/deletion controls;
+* rate/abuse limits.
+
+⸻
+
+19. Development roadmap
+
+Stage 0 — Prototype
+
+Existing capabilities:
+
+* preset formations;
+* fictional squad;
+* account-saved player editing;
+* configurable attributes;
+* basic structural validation;
+* basic suggestions.
+
+Purpose:
+
+Understand the existing implementation before replacing or extending it.
+
+⸻
+
+Stage 1 — Touchline Foundation
+
+Build:
+
+* free tactical canvas;
+* formation templates;
+* player management;
+* starting XI;
+* bench;
+* custom attributes;
+* validation;
+* local/private plans.
+
+Exit condition
+
+A user can create a squad and construct, save and reopen a valid starting XI using a custom tactical system.
+
+⸻
+
+Stage 2 — Tactical Model
+
+Build:
+
+* multiple phases;
+* role instructions;
+* tactical warnings;
+* formation comparison;
+* player comparison;
+* coach rationale.
+
+Exit condition
+
+A user can explain not only who is selected but how the team is intended to operate.
+
+⸻
+
+Stage 3 — Match Planning
+
+Build:
+
+* fixtures;
+* opponents;
+* availability;
+* match objectives;
+* versioned plans;
+* tactical alternatives.
+
+Exit condition
+
+A coach can use Touchline repeatedly as part of real match preparation.
+
+⸻
+
+Stage 4 — Football Data Pilot
+
+Integrate one licensed provider for explicitly supported competitions and seasons.
+
+Build:
+
+* provider adapter;
+* canonical player identity;
+* coverage registry;
+* historical snapshots;
+* provenance;
+* rights-aware rendering.
+
+Exit condition
+
+No unsupported, incorrectly contextualized or unlicensed provider field appears publicly.
+
+⸻
+
+Stage 5 — Collaboration and Intelligence
+
+Explore:
+
+* staff collaboration;
+* comments;
+* tactical assistant;
+* video;
+* set pieces;
+* post-match reflection;
+* learning from coach overrides.
+
+These should only be prioritized after repeated usage of the core planning workflow.
+
+⸻
+
+20. Success signals
+
+Early success should focus on whether Touchline helps people construct and reason about football systems.
+
+Track:
+
+* completed XIs;
+* custom formations created;
+* plans saved;
+* plans revisited;
+* player comparisons;
+* formation comparisons;
+* warnings resolved or overridden;
+* plans shared;
+* repeat users;
+* time to first completed XI.
+
+For coaching users:
+
+Can the coach explain the selected XI, tactical structure and rejected alternative from the saved plan?
+
+That matters more than whether the team won its next match.
+
+⸻
+
+21. Open product questions
+
+1. Should Touchline begin primarily as a public football sandbox or a coach planning tool?
+2. At what point does account creation become necessary?
+3. What should remain usable without commercial football data?
+4. Which provider, leagues and seasons would justify the first licensed data experiment?
+5. How sophisticated should tactical heuristics become before they create false confidence?
+6. How should custom roles interact with standardized football positions?
+7. Which parts of a tactical board should be shareable without an account?
+8. Should formations be stored as normalized tactical objects so community-created templates can eventually be shared?
+9. Should the first Touchline release support mobile editing or prioritize desktop planning with mobile viewing?
+10. How should AI participate: tactical questioning, explanation, alternative generation, or eventually all three?
+
+⸻
+
+22. Out of scope for the initial build
+
+Unless required by the foundational architecture, do not prioritize:
+
+* match-result prediction;
+* universal player ratings;
+* live match management;
+* fantasy football;
+* transfer valuation;
+* betting;
+* automated scouting claims;
+* video analysis;
+* tracking-data visualization;
+* social network functionality;
+* broad multi-provider integration.
+
+Build the planning experience first.
+
+⸻
+
+23. Repository philosophy
+
+This repository is an experimental build environment.
+
+Changes should preferably follow:
+
+PRODUCT IDEA
+     ↓
+SPECIFICATION
+     ↓
+GITHUB ISSUE
+     ↓
+BRANCH
+     ↓
+IMPLEMENTATION
+     ↓
+TEST
+     ↓
+PULL REQUEST
+     ↓
+REVIEW
+     ↓
+MERGE
+
+Large product requirements should be decomposed into small, independently review
