@@ -36,7 +36,7 @@ The job is not to maximize eleven individual ratings. It is to assemble a team t
 
 - **FR1 — Match plans.** Create, reopen, duplicate and revise a plan for one fixture. Store opponent, kickoff, selected XI, shape, rationale and version history.
 - **FR2 — Roster.** Maintain name, shirt number, preferred foot, primary and secondary positions, availability, recent workload note and configurable attributes.
-- **FR3 — Formation board.** Offer twelve formations with role labels and separate example shapes in and out of possession. Role instructions can change without changing the formation label.
+- **FR3 — Formation board.** Offer all football formations with role labels and separate example shapes in and out of possession. Role instructions can change without changing the formation label.
 - **FR4 — Explainable suggestions.** Every suggestion identifies inputs and assumptions. The coach can accept, modify or reject it and record why.
 - **FR5 — Comparisons.** Comparing candidate players or shapes shows role coverage, declared evidence and resulting team responsibilities rather than one unexplained score.
 - **FR6 — Coach override.** The coach can finish with an unconventional XI after acknowledging material warnings. The product never silently repairs an override.
